@@ -26,6 +26,7 @@
 		transform:translateX(-50%);
 		white-space: nowrap;
 		color: #cccccc;
+		font-size: 0.75em;
 	}
 	.container { 
 		width:300px;
@@ -37,6 +38,7 @@
 		font-weight: bolder; 
 		padding:0.5em;
 		margin-bottom: 0.5em;
+		white-space: nowrap;
 	}
 	.container > .input-wrapper {
 		margin:0.5em 0;
@@ -70,34 +72,60 @@
 		color:inherit;
 		text-decoration: none;
 	}
+	
+	@media screen and (max-width:640px){
+		.warning {
+			white-space: normal;
+			font-size: 0.5em;
+			width:90%;
+			min-width:250px;
+			text-align: center;
+		}
+	}
+	
+	@media screen and (max-width:400px){
+		.container {
+			width:90%;
+			min-width:250px;
+		}
+		.container > .logo-wrapper {
+			font-size:1.8em;
+		}
+		.container > .help-wrapper {
+			width:90%;
+			min-width:250px;
+			font-size:0.5em;
+		}
+	}
 </style>
 </head>
 <body>
 	<div class="warning">
-		이 사이트는 Spring websocket의 이해를 돕기 위한 수업 자료로 사용되며 다른 용도로 사용되지 않습니다.
+		이 사이트는 WebSocket의 이해를 돕기 위한 수업 자료로 사용되며 다른 용도로 사용되지 않습니다.
 	</div>
-	<div class="container">
-		<div class="logo-wrapper">
-			COCOA-TALK
+	<form method="post">
+		<div class="container">
+			<div class="logo-wrapper">
+				COCOA-TALK
+			</div>
+			<div class="input-wrapper">
+				<input type="text" name="email" placeholder="이메일">
+			</div>
+			<div class="input-wrapper">
+				<button type="submit">로그인</button>
+			</div>
+			<div class="input-wrapper">
+				<label>
+					<input type="checkbox" name="autoLogin">
+					자동로그인
+				</label>
+			</div>
+			<div class="help-wrapper">
+				<a href="#">코코아계정 만들기</a> 
+				| 
+				<a href="#">코코아계정 찾기</a>
+			</div>
 		</div>
-		<div class="input-wrapper">
-			<input type="text" name="userId" placeholder="아이디(이메일)">
-			<input type="password" name="userPw" placeholder="비밀번호">
-		</div>
-		<div class="input-wrapper">
-			<button type="submit">로그인</button>
-		</div>
-		<div class="input-wrapper">
-			<label>
-				<input type="checkbox" name="autoLogin">
-				자동로그인
-			</label>
-		</div>
-		<div class="help-wrapper">
-			<a href="#">코코아계정 만들기</a> 
-			| 
-			<a href="#">코코아계정 찾기</a>
-		</div>
-	</div>
+	</form>
 </body>
 </html>
