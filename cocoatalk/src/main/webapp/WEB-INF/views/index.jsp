@@ -40,6 +40,11 @@
 		margin-bottom: 0.5em;
 		white-space: nowrap;
 	}
+	.container > .message-wrapper {
+		text-align: center;
+		color:#cccccc;
+		height:2em;
+	}
 	.container > .input-wrapper {
 		margin:0.5em 0;
 	}
@@ -103,17 +108,21 @@
 	<div class="warning">
 		이 사이트는 WebSocket의 이해를 돕기 위한 수업 자료로 사용되며 다른 용도로 사용되지 않습니다.
 	</div>
-	<form method="post">
+	<form method="post" class="login-form">
 		<div class="container">
 			<div class="logo-wrapper">
 				COCOA-TALK
 			</div>
 			<div class="input-wrapper">
-				<input type="text" name="email" placeholder="이메일">
+				<input type="text" name="nickname" placeholder="닉네임">
 			</div>
 			<div class="input-wrapper">
 				<button type="submit">로그인</button>
 			</div>
+			<div class="message-wrapper">
+				
+			</div>
+			<!-- 
 			<div class="input-wrapper">
 				<label>
 					<input type="checkbox" name="autoLogin">
@@ -125,7 +134,31 @@
 				| 
 				<a href="#">코코아계정 찾기</a>
 			</div>
+			 -->
 		</div>
 	</form>
+	
+	<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+	<script>
+		$(function(){
+			$(".login-form").submit(function(e){
+				e.preventDefault();
+				
+				var nickname = $(this).find("input[name=nickname]").val();
+				if(!nickname) return;
+				
+				$.post("${pageContext.request.contextPath}/", {
+					nickname : nickname
+				}, function(resp){
+					if(resp){
+						location.href = "home";
+					}
+					else{
+						$(".message-wrapper").text("이미 사용중인 닉네임입니다");
+					}
+				});
+			});
+		});
+	</script>
 </body>
 </html>

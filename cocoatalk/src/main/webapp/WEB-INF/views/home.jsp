@@ -91,16 +91,38 @@
 		background-color: #59473f;
 		
 		font-size: 20px;
-		padding:1em;
+		display:flex;
+		flex-direction:column;
+		flex-wrap:nowrap;
 		
 		transition:left 0.3s ease-in-out;
 	}
-	.chat-wrapper > .message-wrapper {}
+	.chat-wrapper > .room-information {
+		background:white;
+		font-size:18px;
+		padding:0.5em;
+		height:65px;
+	}
+	.chat-wrapper > .room-information > .title{
+		overflow:hidden;
+		text-overflow:ellipsis;
+		white-space: nowrap;
+	}
+	.chat-wrapper > .room-information > .status{
+		font-size:12px;
+		color:#666;
+		overflow:hidden;
+		text-overflow:ellipsis;
+		white-space: nowrap;
+	}
+	.chat-wrapper > .message-wrapper {
+		flex-grow: 1;
+		flex-shrink: 1;
+		padding:15px;
+		overflow: auto;
+	}
 	.chat-wrapper > .control-panel{
-		position:absolute;
-		bottom:0;
-		left:0;
-		right:0;
+		height:200px;
 		background: white;
 	}
 	.chat-wrapper > .control-panel > .first-panel{
@@ -115,6 +137,7 @@
 		outline: none;
 		padding:0.75em;
 		width:100%;
+		height:100%;
 		font: inherit;
 		border: none;
 	}
@@ -207,6 +230,73 @@
 	.icon:hover {
 		stroke:#333333;
 	}
+	.message-outer{
+		padding:5px;
+		display: flex;
+	}
+	.message-outer.my {
+		flex-direction: row-reverse;
+	}
+	.message-outer > .message-profile {
+		flex-shrink:0;
+		width:50px;
+		height:50px;
+		padding:5px;
+	}
+	.message-outer > .message-profile:not(.first){
+		height:auto;
+	}
+	.message-outer > .message-profile > img {
+		width:100%;
+		height:100%;
+		border-radius:35%;
+	}
+	.message-outer > .message-body {
+		flex-grow:1;
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+	}
+	.message-outer.my > .message-body {
+		display: flex;
+		flex-direction: row-reverse;
+		flex-wrap: wrap;
+	}
+	.message-outer > .message-body > .sender {
+		width:100%;
+		color:#EEE;
+		font-size: 15px;
+		padding:7px 0px;
+	}
+	.message-outer:not(.my) > .message-body > .sender {
+		text-align: left;
+	}
+	.message-outer.my > .message-body > .sender {
+		text-align: right;
+	}
+	.message-outer > .message-body > .content {
+		font-size:12px;
+		padding:0.35em 0.75em;
+		background:#EEE;
+		border-radius: 5px;
+		white-space: pre-wrap;
+		word-break:break-all;
+		max-width: 70%;
+	}
+	.message-outer:not(.my) > .message-body > .content{
+		margin-right: 5px;
+	}
+	.message-outer.my > .message-body > .content{
+		margin-left: 5px;
+	}
+	.message-outer > .message-body > .time {
+		font-size: 10px;
+		color:#EEE;
+		word-spacing: 1px;
+		display: flex;
+		align-items: flex-end;
+	}
+	
 </style>
 </head>
 <body>
@@ -219,11 +309,12 @@
 			<div class="user-list">
 				<div class="user" v-for="(user, idx) in users">
 					<div class="user-profile">
-						<img v-bind:src="user.userProfile">
+						<img v-bind:src="user.profile">
 					</div>
-					<div class="user-detail" v-on:click="joinChannel(user);">
-						<div class="user-name">{{user.userId}}</div>
-						<div class="user-status">{{user.userStatus}}</div>
+<!-- 					<div class="user-detail" v-on:click="joinChannel(user);"> -->
+					<div class="user-detail" v-on:click="selectUser(user);">
+						<div class="user-name">{{user.id}}</div>
+						<div class="user-status">{{user.status}}</div>
 					</div>
 				</div>
 			</div>
@@ -231,16 +322,31 @@
 		
 		<!-- chat-wrapper -->
 		<div class="chat-wrapper">
-			<div class="message-wrapper">
-			
+			<div class="room-information">
+				<div class="title" v-if="currentUser">{{currentUser.id}}</div>  
+				<div class="status" v-if="currentUser">{{currentUser.status}}</div>
+			</div>
+			<div class="message-wrapper" ref="messageWrapper">
+				<div v-if="currentUser" v-for="(msg, idx) in currentUser.history" >
+					<div  class="message-outer" v-bind:class="{my:msg.sender==owner}"> 
+						<div class="message-profile" v-if="msg.sender != owner" :class="{first : checkFirst(idx)}">
+							<img src="https://picsum.photos/50" v-if="checkFirst(idx)">
+						</div>
+						<div class="message-body" >
+							<div class="sender" v-if="msg.sender != owner && checkFirst(idx)">{{msg.sender}}</div>
+							<div class="content">{{msg.content}}</div>
+							<div class="time" v-if="checkLast(idx)">{{msg.time}}</div>
+						</div>
+					</div>
+				</div>
 			</div>
 			<div class="control-panel">
 				<div class="first-panel">
 					<div class="input-panel">
-						<textarea name="message" placeholder="메세지 작성" v-model="inputMessage"></textarea>
+						<textarea name="message" ref="messageInput" v-bind:placeholder="textareaPlaceholder" v-model="inputMessage" v-bind:disabled="!currentUser"></textarea>
 					</div>
 					<div class="button-panel">
-						<button v-on:click="sendMessage">전송</button>
+						<button v-on:click="sendMessage" v-bind:disabled="!currentUser">전송</button>
 					</div>
 				</div>
 				<div class="option-panel">
@@ -277,46 +383,13 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 	<script>
-	
-		function Channel(name){
-			this.name = name;
-			this.history = [];
-		}
-	
 		var app = Vue.createApp({
 			data(){
 				return {
-					users:[
-						{userId:"test1", userProfile:"https://picsum.photos/seed/1/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"}, 
-						{userId:"test2", userProfile:"https://picsum.photos/seed/2/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test3", userProfile:"https://picsum.photos/seed/3/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test4", userProfile:"https://picsum.photos/seed/4/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test5", userProfile:"https://picsum.photos/seed/5/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test6", userProfile:"https://picsum.photos/seed/6/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test7", userProfile:"https://picsum.photos/seed/7/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test8", userProfile:"https://picsum.photos/seed/8/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test9", userProfile:"https://picsum.photos/seed/9/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test10", userProfile:"https://picsum.photos/seed/10/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test11", userProfile:"https://picsum.photos/seed/11/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test12", userProfile:"https://picsum.photos/seed/12/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test13", userProfile:"https://picsum.photos/seed/13/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test14", userProfile:"https://picsum.photos/seed/14/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test15", userProfile:"https://picsum.photos/seed/15/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test16", userProfile:"https://picsum.photos/seed/16/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test17", userProfile:"https://picsum.photos/seed/17/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test18", userProfile:"https://picsum.photos/seed/18/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test19", userProfile:"https://picsum.photos/seed/19/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-						{userId:"test20", userProfile:"https://picsum.photos/seed/20/100/100", userStatus:"치키치키차카차카초코초코초치키치카차카차카초코초코초"},
-					],
-					currentChannel:null,
-					channels:[
-// 						{name:"/topic/1", history:[]},
-// 						{name:"/topic/2", history:[]},
-// 						{name:"/topic/3", history:[]},
-// 						{name:"/topic/4", history:[]},
-// 						{name:"/topic/5", history:[]},
-// 						{name:"/topic/6", history:[]},
-					],
+					owner : "${id}",
+					
+					users:[],
+					currentUser:null,
 					
 					//websocket
 					socket:null,
@@ -329,22 +402,61 @@
 			computed:{
 				canSend(){
 					return this.inputMessage.trim().length > 0;
-				}
+				},
+				textareaPlaceholder(){
+					return this.currentUser ? "메세지 작성" : "사용자를 먼저 선택하세요";
+				},
 			},
 			methods:{
 				connectOperation(){
-					this.client.subscribe("/topic/all", this.receiveOperation);
-					this.channels.forEach((channel)=>{
-						this.client.subscribe(channel.name, this.receiveOperation);
+					this.client.subscribe("/topic/all", this.publicReceiveOperation);
+					this.client.subscribe("/topic/${id}", this.privateReceiveOperation);
+				},
+				publicReceiveOperation(response){
+					let userList = JSON.parse(response.body);
+					userList.forEach((user, index)=>{
+						if(this.users.length > 0){
+							const find = this.users.find(u=>u.id == user.id);
+							if(find && find.length > 0){
+								user.history = find[0].history;
+							}
+						}
+						
+						if(!user.history){
+							user.history = [];
+						}
 					});
+					this.users = userList;
+				},
+				privateReceiveOperation(response){
+					let roomData = JSON.parse(response.body);
+					
+					const message = roomData.message;
+					delete roomData.message;
+					
+// 					console.log(roomData);
+// 					console.log(message);
+					for(let i=0; i < this.users.length; i++){
+						if(this.users[i].id == roomData.target){
+							this.users[i].roomData = roomData;
+							this.users[i].history.push(message);
+							break;
+						}
+					}
+					this.client.subscribe("/topic/"+roomData.roomNo, this.receiveOperation);
 				},
 				receiveOperation(response){
-					console.log("---> response", response);
-					var find = this.channels.filter(channel=>{
-						return channel.name == response.headers.destination;
-					});
-					if(find.length > 0){
-						find[0].history.push(response);	
+					console.log("receive--------------------------");
+					console.log(response);
+					console.log("----------------------------------");
+					for(let i=0; i < this.users.length; i++){
+						console.log(this.users[i].roomData, response.headers.destination);
+						if(this.users[i].roomData && "/topic/"+this.users[i].roomData.roomNo == response.headers.destination){
+							this.users[i].history.push(JSON.parse(response.body));
+							setTimeout(()=>{
+								this.$refs.messageWrapper.scrollTop = this.$refs.messageWrapper.scrollHeight + 100;
+							}, 10);
+						}
 					}
 				},
 				disconnectOperation(){
@@ -355,35 +467,36 @@
 				},
 				sendMessage(){
 					if(this.canSend){
-						this.client.send("/app/chat/1", {}, this.inputMessage);
+						this.client.send("/app/chat/${id}/"+this.currentUser.id, {}, this.inputMessage);
 						this.inputMessage = "";
+						this.$refs.messageInput.focus();
 					}
 				},
-				joinChannel(user){
-					var find = this.channels.filter(ch =>{
-						return ch.name == "/topic/"+user.userId
-					});
-					if(find.length == 0){
-						let channel = new Channel(user.userId);
-						this.channels.push(channel);
-						this.currentChannel = channel;
-					}
-					else{
-						console.log("exist");
-						this.currentChannel = find[0];
-					}
+				selectUser(user){
+					this.currentUser = user;
 				},
-				leaveChannel(name){
-					this.channels.removeIf((channel, idx)=>{
-						return channel.name === name;
-					});
+				//첫번째 메세지 확인(동일시간)
+				checkFirst(idx){
+					if(idx == 0) return true;
+					
+					if(this.currentUser.history[idx-1].time != this.currentUser.history[idx].time) return true;
+					
+					if(this.currentUser.history[idx-1].sender != this.currentUser.history[idx].sender) return true;
+					
+					return false;
 				},
-				test(){
-					alert("test");
-				}
+				//마지막 메세지 확인(동일시간)
+				checkLast(idx){
+					if(idx == this.currentUser.history.length-1) return true;
+					
+					if(this.currentUser.history[idx+1].time != this.currentUser.history[idx].time) return true;
+					
+					if(this.currentUser.history[idx+1].sender != this.currentUser.history[idx].sender) return true;
+					
+					return false;
+				},
 			},
 			created(){
-				console.log("created");
 				this.socket = new SockJS("${pageContext.request.contextPath}/endpoint");
 				this.client = Stomp.over(this.socket);
 				
@@ -394,3 +507,4 @@
 	</script>
 </body>
 </html>
+
