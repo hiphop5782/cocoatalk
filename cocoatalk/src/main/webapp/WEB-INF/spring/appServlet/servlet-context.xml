@@ -85,7 +85,7 @@
 	<!-- stomp setting -->
 	<bean id="listener" class="com.hacademy.cocoatalk.chat.Server"></bean>
 	<websocket:message-broker application-destination-prefix="/app,/topic">
-		<websocket:stomp-endpoint path="/endpoint" allowed-origins="www.sysout.co.kr">
+		<websocket:stomp-endpoint path="/endpoint" allowed-origin-patterns="www.sysout.co.kr">
 			<websocket:handshake-interceptors>
 				<bean class="org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor"></bean>
 			</websocket:handshake-interceptors>
