@@ -478,6 +478,10 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 	<script>
+		window.addEventListener("beforeunload", function(){
+			return false;
+		});
+	
 		var app = Vue.createApp({
 			data(){
 				return {
