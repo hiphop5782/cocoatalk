@@ -398,7 +398,7 @@
 					<div class="room-profile">
 						<img src="https://via.placeholder.com/50x50?text=R">
 					</div>
-					<div class="room-detail" @click="selectRoom(room);">
+					<div class="room-detail" v-on:click="selectRoom(room);">
 						<div class="room-name">
 							<span v-show="false">{{room.no}}번 방</span>
 							{{convertToUserString(room.users)}}
@@ -420,9 +420,6 @@
 					{{convertToUserString(currentRoom.users)}}
 				</div>
 				<div class="title" v-else-if="isUserSelected">{{currentUser.id}}</div>  
-				
-				<div class="status" v-if="isRoomSelected">{{currentUser.status}}</div>
-				<div class="status" v-else-if="isUserSelected">{{currentUser.status}}</div>
 			</div>
 			<div class="message-wrapper" ref="messageWrapper">
 				<div v-if="currentRoom" v-for="(msg, idx) in currentRoom.messages" >
@@ -500,8 +497,6 @@
 					
 					//input
 					inputMessage:"",
-					
-					remainCount : 0,
 				};
 			},
 			computed:{
@@ -523,6 +518,12 @@
 				isRoomSelected(){
 					return this.currentRoom != null;
 				},
+				remainCount(){
+					return this.rooms
+									.filter(room=>room.count)
+									.map(room=>room.count)
+									.reduce((prev, next) => prev+next , 0);
+				}
 			},
 			methods:{
 				connectOperation(){
@@ -554,7 +555,7 @@
 						this.rooms.push(room);
 						this.client.subscribe("/topic/"+roomData.roomNumber, this.receiveOperation);
 						
-						//발신자와 수신자가 같으면 생성메세지로 보고 방을 변경
+						//발신자와 소유자가 같으면 생성메세지로 보고 방을 변경
 						if(roomData.message.sender == this.owner){
 							this.currentRoom = room;
 						}
@@ -617,6 +618,7 @@
 
 					//자기자신
 					if(user.id == this.owner){
+						console.log("자기자신 선택");
 						for(let i=0; i < this.rooms.length; i++){
 							if(this.rooms[i].users.length == 1) {
 								this.selectRoom(this.rooms[i]);
@@ -681,24 +683,12 @@
 			},
 			watch:{
 				currentRoom : {
-					handler(room){
-						console.log("watch currentRoom start");
-						room.count = 0;
-						console.log("watch currentRoom finish");
-					},
 					deep:true,
-				},
-				//remainCount 자동계산
-				rooms:{
-					handler(rooms){
-						console.log("rooms watch start");
-						this.remainCount = this.rooms
-															.filter(room=>room.count)
-															.map(room=>room.count)
-															.reduce((prev, next) => prev+next , 0);
-						console.log("rooms watch finish");
-					},
-					deep:true
+					handler(room){
+						if(room != null){
+							room.count = 0;
+						}
+					}
 				},
 			},
 			created(){
