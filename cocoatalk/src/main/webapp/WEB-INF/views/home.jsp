@@ -27,17 +27,46 @@
 		display:flex;
 	}
 	.side-bar > .icon-bar{
+		display:flex;
+		flex-direction:column;
+		align-items:center;
+	
 		width:60px;
 		background:#CCCCCC;
 		transition:width 0.3s ease-in-out;
 	}
-	.side-bar > .user-list {
+	.side-bar > .icon-bar > .icon-wrapper {
+		position:relative;
+		margin:10px 0px;
+	}
+	.side-bar > .icon-bar > .icon-wrapper > .badge,
+	.side-bar > .room-list > .room > .room-detail > .badge {
+		position:absolute;
+		bottom:0;
+		right:0;
+		font-size: 4px;
+		
+		background-color: white;
+		border-radius:50%;
+		width:15px;
+		height:15px;
+		display: flex;
+		justify-content: center;
+		align-items:center;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+	.side-bar > .user-list,
+	.side-bar > .room-list {
 		width:290px;
 		padding:0.2em;
 		overflow: auto;
 		transition:width 0.3s ease-in-out;
 	}
-	.side-bar > .user-list > .user {
+	.side-bar > .user-list > .user,
+	.side-bar > .room-list > .room {
+		position:relative;
 		padding:8px 4px;
 		display: flex;
 		flex-wrap: nowrap;
@@ -45,10 +74,12 @@
 		align-items: center;
 		cursor:pointer;
 	}
-	.side-bar > .user-list > .user:hover {
+	.side-bar > .user-list > .user:hover,
+	.side-bar > .room-list > .room:hover {
 		background-color: #EEEEEE;
 	}
-	.side-bar > .user-list > .user > .user-profile {
+	.side-bar > .user-list > .user > .user-profile,
+	.side-bar > .room-list > .room > .room-profile {
 		border-radius:35%;
 		width:35px;
 		height:35px;
@@ -58,18 +89,22 @@
 		
 		transition:margin-left 0.3s ease-in-out;
 	}
-	.side-bar > .user-list > .user > .user-profile > img {
+	.side-bar > .user-list > .user > .user-profile > img,
+	.side-bar > .room-list > .room > .room-profile > img {
 		width:100%;
 		height:100%;
 	}
-	.side-bar > .user-list > .user > .user-detail {
+	.side-bar > .user-list > .user > .user-detail,
+	.side-bar > .room-list > .room > .room-detail {
 		width:240px;
 		padding:8px;
 		padding-left: 16px;
 		transition:width 0.3s ease-in-out;
 	}
 	.side-bar > .user-list > .user > .user-detail > .user-name,
-	.side-bar > .user-list > .user > .user-detail > .user-status {
+	.side-bar > .user-list > .user > .user-detail > .user-status,
+	.side-bar > .room-list > .room > .room-detail > .room-name,
+	.side-bar > .room-list > .room > .room-detail > .room-preview {
 		width:100%;
 		overflow:hidden;
 		white-space: nowrap;
@@ -77,9 +112,17 @@
 		transition:transform 0.3s ease-in-out;
 	}
 	
-	.side-bar > .user-list > .user > .user-detail > .user-status {
+	.side-bar > .user-list > .user > .user-detail > .user-status,
+	.side-bar > .room-list > .room > .room-detail > .room-preview {
 		font-size: 0.95em;
-		color: #666666;
+		color: #CCCCCC;
+	}
+	
+	.side-bar > .room-list > .room > .room-detail > .badge {
+		bottom:50%;
+		transform:translate(-50%, 50%);
+		background-color: #59473f;
+		color:white;
 	}
 	
 	.chat-wrapper {
@@ -162,13 +205,16 @@
 	}
 	
 	@media screen and (max-width:640px){
-		.side-bar > .user-list {
+		.side-bar > .user-list,
+		.side-bar > .room-list {
 			width:150px;
 		}
 		
-		.side-bar > .user-list > .user > .user-detail {
+		.side-bar > .user-list > .user > .user-detail,
+		.side-bar > .room-list > .room > .room-detail {
 			width:100px;
 		}
+		
 		.chat-wrapper {
 			left:210px; 
 		}
@@ -178,16 +224,20 @@
 		.side-bar > .icon-bar{
 			width:40px;
 		}
-		.side-bar > .user-list {
+		.side-bar > .user-list,
+		.side-bar > .room-list {
 			width:100px;
 		}
-		.side-bar > .user-list > .user > .user-profile {
+		.side-bar > .user-list > .user > .user-profile,
+		.side-bar > .room-list > .room > .room-profile {
 			margin-left:-50px;
 		}
-		.side-bar > .user-list > .user > .user-detail {
+		.side-bar > .user-list > .user > .user-detail,
+		.side-bar > .room-list > .room > .room-detail{
 			width:100px;
 		}
-		.side-bar > .user-list > .user > .user-detail > .user-status {
+		.side-bar > .user-list > .user > .user-detail > .user-status,
+		.side-bar > .room-list > .room > .room-detail > .room-preview {
 			transform:translateX(-100%);
 		}
 		.chat-wrapper {
@@ -227,7 +277,8 @@
 		stroke:#aaaaaa;
 		cursor:pointer;
 	}
-	.icon:hover {
+	.icon:hover,
+	.icon.active {
 		stroke:#333333;
 	}
 	.message-outer{
@@ -304,17 +355,58 @@
 		<!-- sidebar -->
 		<div class="side-bar">
 			<div class="icon-bar">
+			
+				<!-- 사용자 목록 아이콘 -->
+				<div class="icon-wrapper">
+					<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-users" width="36" height="36" viewBox="0 0 24 24" stroke-width="1.5" stroke="#000000" fill="none" stroke-linecap="round" stroke-linejoin="round" @click="currentTab = 'user'" :class="{active : currentTab == 'user'}">
+						  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+						  <circle cx="9" cy="7" r="4" />
+						  <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+						  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+						  <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+					</svg>
+				</div>
+				
+				<!-- 채팅방 아이콘 -->
+				<div class="icon-wrapper">
+					<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-message-circle" width="36" height="36" viewBox="0 0 24 24" stroke-width="1.5" stroke="#000000" fill="none" stroke-linecap="round" stroke-linejoin="round" @click="currentTab = 'room'" :class="{active : currentTab == 'room'}">
+					  	<path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+					  	<path d="M3 20l1.3 -3.9a9 8 0 1 1 3.4 2.9l-4.7 1" />
+					  	<line x1="12" y1="12" x2="12" y2="12.01" />
+					  	<line x1="8" y1="12" x2="8" y2="12.01" />
+					  	<line x1="16" y1="12" x2="16" y2="12.01" />
+					</svg>
+					<div class="badge" v-show="remainCount > 0">{{remainCount}}</div>
+				</div>
+				
 				
 			</div>
-			<div class="user-list">
-				<div class="user" v-for="(user, idx) in users">
+			<div class="user-list" v-show="isUserMode">
+				<div class="user" v-for="(user, idx) in users" :key="idx">
 					<div class="user-profile">
 						<img v-bind:src="user.profile">
 					</div>
-<!-- 					<div class="user-detail" v-on:click="joinChannel(user);"> -->
 					<div class="user-detail" v-on:click="selectUser(user);">
 						<div class="user-name">{{user.id}}</div>
 						<div class="user-status">{{user.status}}</div>
+					</div>
+				</div>
+			</div>
+			
+			<div class="room-list" v-show="isRoomMode">
+				<div class="room" v-for="(room, idx) in rooms" :key="idx">
+					<div class="room-profile">
+						<img src="https://via.placeholder.com/50x50?text=R">
+					</div>
+					<div class="room-detail" @click="selectRoom(room);">
+						<div class="room-name">
+							<span v-show="false">{{room.no}}번 방</span>
+							{{convertToUserString(room.users)}}
+						</div>
+						<div class="room-preview">
+							{{room.messages[room.messages.length-1].content}}
+						</div>
+						<div class="badge" v-show="room.count > 0">{{room.count}}</div>
 					</div>
 				</div>
 			</div>
@@ -323,11 +415,17 @@
 		<!-- chat-wrapper -->
 		<div class="chat-wrapper">
 			<div class="room-information">
-				<div class="title" v-if="currentUser">{{currentUser.id}}</div>  
-				<div class="status" v-if="currentUser">{{currentUser.status}}</div>
+				<div class="title" v-if="isRoomSelected">
+					<span v-show="false">{{currentRoom.no}}번 방</span>
+					{{convertToUserString(currentRoom.users)}}
+				</div>
+				<div class="title" v-else-if="isUserSelected">{{currentUser.id}}</div>  
+				
+				<div class="status" v-if="isRoomSelected">{{currentUser.status}}</div>
+				<div class="status" v-else-if="isUserSelected">{{currentUser.status}}</div>
 			</div>
 			<div class="message-wrapper" ref="messageWrapper">
-				<div v-if="currentUser" v-for="(msg, idx) in currentUser.history" >
+				<div v-if="currentRoom" v-for="(msg, idx) in currentRoom.messages" >
 					<div  class="message-outer" v-bind:class="{my:msg.sender==owner}"> 
 						<div class="message-profile" v-if="msg.sender != owner" :class="{first : checkFirst(idx)}">
 							<img src="https://picsum.photos/50" v-if="checkFirst(idx)">
@@ -343,10 +441,10 @@
 			<div class="control-panel">
 				<div class="first-panel">
 					<div class="input-panel">
-						<textarea name="message" ref="messageInput" v-bind:placeholder="textareaPlaceholder" v-model="inputMessage" v-bind:disabled="!currentUser"></textarea>
+						<textarea name="message" ref="messageInput" v-bind:placeholder="textareaPlaceholder" v-model="inputMessage" v-bind:disabled="!isUserSelected"></textarea>
 					</div>
 					<div class="button-panel">
-						<button v-on:click="sendMessage" v-bind:disabled="!currentUser">전송</button>
+						<button v-on:click="sendMessage" v-bind:disabled="!isUserSelected">전송</button>
 					</div>
 				</div>
 				<div class="option-panel">
@@ -388,8 +486,13 @@
 				return {
 					owner : "${id}",
 					
+					currentTab : "user",//user 또는 room
+					
 					users:[],
 					currentUser:null,
+					
+					rooms:[],
+					currentRoom:null,
 					
 					//websocket
 					socket:null,
@@ -397,6 +500,8 @@
 					
 					//input
 					inputMessage:"",
+					
+					remainCount : 0,
 				};
 			},
 			computed:{
@@ -406,6 +511,18 @@
 				textareaPlaceholder(){
 					return this.currentUser ? "메세지 작성" : "사용자를 먼저 선택하세요";
 				},
+				isUserMode(){
+					return this.currentTab == "user";
+				},
+				isRoomMode(){
+					return this.currentTab == "room";
+				},
+				isUserSelected(){
+					return this.currentUser != null;
+				},
+				isRoomSelected(){
+					return this.currentRoom != null;
+				},
 			},
 			methods:{
 				connectOperation(){
@@ -413,50 +530,64 @@
 					this.client.subscribe("/topic/${id}", this.privateReceiveOperation);
 				},
 				publicReceiveOperation(response){
-					let userList = JSON.parse(response.body);
-					userList.forEach((user, index)=>{
-						if(this.users.length > 0){
-							const find = this.users.find(u=>u.id == user.id);
-							if(find && find.length > 0){
-								user.history = find[0].history;
-							}
-						}
-						
-						if(!user.history){
-							user.history = [];
-						}
-					});
-					this.users = userList;
+					this.users = JSON.parse(response.body);
 				},
+				//신규 생성된 방과 관련된 메세지 수신
 				privateReceiveOperation(response){
-					let roomData = JSON.parse(response.body);
+					const roomData = JSON.parse(response.body);
 					
-					const message = roomData.message;
-					delete roomData.message;
-					
-// 					console.log(roomData);
-// 					console.log(message);
-					for(let i=0; i < this.users.length; i++){
-						if(this.users[i].id == roomData.target){
-							this.users[i].roomData = roomData;
-							this.users[i].history.push(message);
+					let room = null;
+					for(let i=0; i < this.rooms.length; i++){
+						if(this.rooms[i].no == roomData.roomNumber) {
+							room = this.rooms[i];
 							break;
 						}
 					}
-					this.client.subscribe("/topic/"+roomData.roomNo, this.receiveOperation);
+					
+					if(!room){
+						room = {
+							no : roomData.roomNumber,
+							users : roomData.roomUsers,
+							messages : [roomData.message],
+							count : roomData.message.sender == this.owner ? 0 : 1,
+						};
+						this.rooms.push(room);
+						this.client.subscribe("/topic/"+roomData.roomNumber, this.receiveOperation);
+						
+						//발신자와 수신자가 같으면 생성메세지로 보고 방을 변경
+						if(roomData.message.sender == this.owner){
+							this.currentRoom = room;
+						}
+					}
 				},
 				receiveOperation(response){
-					console.log("receive--------------------------");
-					console.log(response);
-					console.log("----------------------------------");
-					for(let i=0; i < this.users.length; i++){
-						console.log(this.users[i].roomData, response.headers.destination);
-						if(this.users[i].roomData && "/topic/"+this.users[i].roomData.roomNo == response.headers.destination){
-							this.users[i].history.push(JSON.parse(response.body));
-							setTimeout(()=>{
-								this.$refs.messageWrapper.scrollTop = this.$refs.messageWrapper.scrollHeight + 100;
-							}, 10);
+					//메세지 헤더에서 방 번호 추출
+					const destination = response.headers.destination;
+					const idx = destination.lastIndexOf("/");
+					const roomNumber = destination.substring(idx+1);
+					
+					//현재 방인지 아닌지 판정
+					const isCurrentRoom = this.currentRoom && this.currentRoom.no == roomNumber;
+					
+					for(let i=0; i < this.rooms.length; i++){
+						if(this.rooms[i].no == roomNumber) {
+							const message = JSON.parse(response.body);
+							if(isCurrentRoom) {
+								this.rooms[i].count = 0;
+							}
+							else {
+								this.rooms[i].count = this.rooms[i].count || 0;
+								this.rooms[i].count++;
+							}
+							this.rooms[i].messages.push(message);
 						}
+					}
+					
+					//현재 방일 경우 추가 후 스크롤 갱신, 아닐 경우 배지 추가
+					if(isCurrentRoom){
+						setTimeout(()=>{
+							this.$refs.messageWrapper.scrollTop = this.$refs.messageWrapper.scrollHeight + 100;
+						}, 10);
 					}
 				},
 				disconnectOperation(){
@@ -466,34 +597,108 @@
 					this.client = null;
 				},
 				sendMessage(){
-					if(this.canSend){
-						this.client.send("/app/chat/${id}/"+this.currentUser.id, {}, this.inputMessage);
+					if(!this.canSend) return;
+						
+					if(this.isRoomSelected){
+						this.client.send("/app/chat/room/"+this.currentRoom.no, {}, this.inputMessage);
 						this.inputMessage = "";
 						this.$refs.messageInput.focus();
 					}
+					else if(this.isUserSelected){
+						this.client.send("/app/chat/id/"+this.currentUser.id, {}, this.inputMessage);
+						this.inputMessage = "";
+						this.$refs.messageInput.focus();
+					}
+					
 				},
+				
 				selectUser(user){
 					this.currentUser = user;
+
+					//자기자신
+					if(user.id == this.owner){
+						for(let i=0; i < this.rooms.length; i++){
+							if(this.rooms[i].users.length == 1) {
+								this.selectRoom(this.rooms[i]);
+								break;
+							}
+						}
+						return;
+					}
+					
+					//다른사람
+					let index = -1;
+					for(let i=0; i < this.rooms.length; i++){
+						if(this.rooms[i].users.length != 2) continue;
+						
+						const a = this.rooms[i].users[0], b = this.rooms[i].users[1];
+						if((this.owner == a.id && user.id == b.id) || (this.owner == b.id && user.id == a.id)){
+							index = i;
+							break;
+						}
+					}
+					
+					this.selectRoom(index == -1 ? null : this.rooms[index]);
+				},
+				
+				selectRoom(room){
+					this.currentRoom = room;
 				},
 				//첫번째 메세지 확인(동일시간)
 				checkFirst(idx){
 					if(idx == 0) return true;
 					
-					if(this.currentUser.history[idx-1].time != this.currentUser.history[idx].time) return true;
+					const messageList = this.currentRoom.messages;
 					
-					if(this.currentUser.history[idx-1].sender != this.currentUser.history[idx].sender) return true;
+					if(messageList[idx-1].time != messageList[idx].time) return true;
+					if(messageList[idx-1].sender != messageList[idx].sender) return true;
 					
 					return false;
 				},
 				//마지막 메세지 확인(동일시간)
 				checkLast(idx){
-					if(idx == this.currentUser.history.length-1) return true;
+					const messageList = this.currentRoom.messages;
 					
-					if(this.currentUser.history[idx+1].time != this.currentUser.history[idx].time) return true;
-					
-					if(this.currentUser.history[idx+1].sender != this.currentUser.history[idx].sender) return true;
+					if(idx == messageList.length-1) return true;
+					if(messageList[idx+1].time != messageList[idx].time) return true;
+					if(messageList[idx+1].sender != messageList[idx].sender) return true;
 					
 					return false;
+				},
+				confirmLeave(){
+					const choice = window.confirm("페이지를 벗어나면 채팅기록이 초기화됩니다.\n나가시겠습니까?");
+					if(choice){
+						return true;
+					}
+					return false;
+				},
+				convertToUserString(array){
+					if(array.length == 1) return array[0].id;
+					
+					const id = this.owner;
+					return array.filter(user=>user.id != id).map(user=> user.id).join(",");
+				},
+			},
+			watch:{
+				currentRoom : {
+					handler(room){
+						console.log("watch currentRoom start");
+						room.count = 0;
+						console.log("watch currentRoom finish");
+					},
+					deep:true,
+				},
+				//remainCount 자동계산
+				rooms:{
+					handler(rooms){
+						console.log("rooms watch start");
+						this.remainCount = this.rooms
+															.filter(room=>room.count)
+															.map(room=>room.count)
+															.reduce((prev, next) => prev+next , 0);
+						console.log("rooms watch finish");
+					},
+					deep:true
 				},
 			},
 			created(){
@@ -501,6 +706,9 @@
 				this.client = Stomp.over(this.socket);
 				
 				this.client.connect({}, this.connectOperation);
+			},
+			mounted(){
+				window.addEventListener("beforeunload", this.confirmLeave);
 			},
 		});
 		app.mount("#app");

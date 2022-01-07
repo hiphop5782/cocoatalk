@@ -83,6 +83,7 @@
 	</mvc:interceptors>
 	 
 	<!-- stomp setting -->
+	<bean id="listener" class="com.hacademy.cocoatalk.chat.Server"></bean>
 	<websocket:message-broker application-destination-prefix="/app,/topic" >
 		<websocket:stomp-endpoint path="/endpoint">
 			<websocket:handshake-interceptors>
@@ -94,14 +95,12 @@
 		<websocket:simple-broker prefix="/topic"/>
 		
 		<!-- 분석은 가능하나 메세지 전송은 안되는듯 -->
-		<!-- 
 		<websocket:client-inbound-channel>
 			<websocket:executor core-pool-size="5" max-pool-size="50" queue-capacity="10" keep-alive-seconds="60"/>
 			<websocket:interceptors>
-				<bean class="com.hacademy.cocoatalk.chat.ChatListener"></bean>
+				<ref bean="listener"/>
 			</websocket:interceptors>
 		</websocket:client-inbound-channel>
-		 -->
 		
 	</websocket:message-broker>
 	

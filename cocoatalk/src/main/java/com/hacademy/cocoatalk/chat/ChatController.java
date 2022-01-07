@@ -1,11 +1,9 @@
 package com.hacademy.cocoatalk.chat;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+
+import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -21,58 +19,43 @@ import lombok.extern.slf4j.Slf4j;
 @Controller
 public class ChatController {
 	
-//	private Server server = new Server();
-	
-	private Set<User> users = new CopyOnWriteArraySet<>();
-	
-	int roomSequence = 1;
-	private Map<String, Integer> rooms = new HashMap<>();
+	@Autowired
+	private Server server;
 	
 	@Autowired
 	private SimpMessagingTemplate template;
 	
-	@MessageMapping("/chat/{owner}/{target}")
-	public void receive(@DestinationVariable String owner, @DestinationVariable String target, String content, SimpMessageHeaderAccessor accessor) {
-		String id = (String)accessor.getSessionAttributes().get("id");
-		if(id == null || owner == null || !id.equals(owner)) return;
-		
-		Map<String, Object> map = new HashMap<>();
-		map.put("sender", id);
-		map.put("content", content);
-		map.put("time", LocalDateTime.now().format(DateTimeFormatter.ofPattern("a h:mm")));
-		
-		if(rooms.containsKey(id)) {
-			int roomNo = rooms.get(id);
-			template.convertAndSend("/topic/"+roomNo, map);
-		}
-		else if(!rooms.containsKey(id) || !rooms.containsKey(target)) {
-			int roomNo = roomSequence++;
-			rooms.put(id, roomNo);
-			
-			Map<String, Object> roomData = new HashMap<>();
-			roomData.put("roomNo", roomNo);
-			roomData.put("owner", owner);
-			roomData.put("target", target);
-			roomData.put("message", map);
-			
-			template.convertAndSend("/topic/"+owner, roomData);
-			template.convertAndSend("/topic/"+target, roomData);
-			return;
-		}
-		
+	@PostConstruct
+	public void init() {
+		server.setTemplate(template);
 	}
+	
+	@MessageMapping("/chat/{type}/{target}")
+	public void receiveTarget(@DestinationVariable String type, @DestinationVariable String target, String content, SimpMessageHeaderAccessor accessor) {
+		System.out.println("type = "+type+", target = " + target);
+		String id = (String)accessor.getSessionAttributes().get("id");
+		if(id == null) return;
+		
+		switch(type) {
+		case "room":
+			server.sendMessageForRoom(id, target, content);
+			break;
+		case "id":
+			server.sendMessageForUser(id, target, content);
+			break;
+		}
+	}
+	
+	private int tempSequence = 1;
 	
 	@SubscribeMapping("/all")// "/topic/all"의 구독을 감지(applicationPrefix에 /topic이 있어야 함)
 	public void subscribe(SimpMessageHeaderAccessor accessor) {
 		String id = (String)accessor.getSessionAttributes().get("id");
 		if(id == null) return;
-		String profile = "https://picsum.photos/200";
+		String profile = "https://picsum.photos/seed/"+(tempSequence++)+"/200";
 		String status = "";
 		
-		User user = User.builder().id(id).profile(profile).status(status).build();
-		users.add(user);
-		
-		template.convertAndSend("/topic/all", users);
+		server.enter(User.builder().id(id).profile(profile).status(status).build());
 	}
 	
 }
