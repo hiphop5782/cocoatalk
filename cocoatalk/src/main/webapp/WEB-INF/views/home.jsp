@@ -667,13 +667,6 @@
 					
 					return false;
 				},
-				confirmLeave(){
-					const choice = window.confirm("페이지를 벗어나면 채팅기록이 초기화됩니다.\n나가시겠습니까?");
-					if(choice){
-						return true;
-					}
-					return false;
-				},
 				convertToUserString(array){
 					if(array.length == 1) return array[0].id;
 					
@@ -698,7 +691,7 @@
 				this.client.connect({}, this.connectOperation);
 			},
 			mounted(){
-				window.addEventListener("beforeunload", this.confirmLeave);
+				
 			},
 		});
 		app.mount("#app");
