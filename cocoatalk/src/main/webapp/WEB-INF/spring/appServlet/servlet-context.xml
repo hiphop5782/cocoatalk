@@ -89,7 +89,7 @@
 			<websocket:handshake-interceptors>
 				<bean class="org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor"></bean>
 			</websocket:handshake-interceptors>
-			<websocket:sockjs></websocket:sockjs>
+			<websocket:sockjs client-library-url="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></websocket:sockjs>
 		</websocket:stomp-endpoint>
 		
 		<websocket:simple-broker prefix="/topic"/>

@@ -11,13 +11,10 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Component
+//@Component
 public class SimpleCORSFilter implements Filter {
 
     @Override
