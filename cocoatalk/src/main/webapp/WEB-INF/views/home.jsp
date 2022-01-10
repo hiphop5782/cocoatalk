@@ -360,7 +360,7 @@
 		align-items: flex-end;
 	}
 	
-	.profile-modal {
+	.modal {
 		position: fixed;
 		top:50%;
 		left:50%;
@@ -369,55 +369,57 @@
 		height: 550px;
 		padding:15px;
 		
-		display:none;
+		visibility:hidden;
+		
+		display:flex;
 		flex-direction: column;
 		
 		border:1px solid black;		
 		background-color: white;
 	}
-	.profile-modal.show {
-		display: flex;
+	.modal.show {
+		visibility: visible;
 	}
 	
-	.profile-modal > .profile-header {
+	.modal > .header {
 		text-align: center;
 		font-size:30px;
 		margin:0.5em 0;
 	}
 	
-	.profile-modal > .row {
+	.modal > .row {
 		margin-top:5px;
 		margin-bottom:5px;
 	}
-	.profile-modal > .row.label {
+	.modal > .row.label {
 		margin-top:15px;
 	}
-	.profile-modal > .row.profile-wrapper {
+	.modal > .row.profile-wrapper {
 		display:flex;
 		flex-wrap:wrap;
 	}
-	.profile-modal > .row.profile-wrapper > .profile-image {
+	.modal > .row.profile-wrapper > .profile-image {
 		width:20%;
 		overflow:hidden;
 		padding:5px;
 		cursor:pointer;
 	}
-	.profile-modal > .row.profile-wrapper > .profile-image > img {
+	.modal > .row.profile-wrapper > .profile-image > img {
 		width:100%;
 		border:2px solid transparent;
 	}
 	
-	.profile-modal > .row.profile-wrapper > .profile-image:hover > img,
-	.profile-modal > .row.profile-wrapper > .profile-image > img.selected {
+	.modal > .row.profile-wrapper > .profile-image:hover > img,
+	.modal > .row.profile-wrapper > .profile-image > img.selected {
 		border:2px solid #59473f;
 	}
-	.profile-modal > .row-empty {
+	.modal > .row-empty {
 		flex-grow: 1
 	}
-	.profile-modal > .profile-footer {
+	.modal > .footer {
 		text-align: right;
 	}
-	.profile-modal > .profile-footer > button {
+	.modal > .footer > button {
 		margin-left: 5px;
 		outline: none;
 		border:1px solid #59473f;
@@ -426,18 +428,27 @@
 		padding:0.5em;
 		cursor:pointer;
 	}
-	.profile-modal > .profile-footer > button:hover {
+	.modal > .footer > button:hover {
 		background-color: #59473f;
 		color: white;
 	}
 	
-	.profile-modal input {
+	.modal input {
 		border:none;
 		border-bottom:2px solid #59473f;
 		width:100%;
 		outline: none;
 		font-size: 15px;
 		padding: 0.5em;
+	}
+	.modal.group-modal li {
+		cursor:pointer;
+	}
+	.modal.group-modal li > div:hover {
+		color:#cccccc;
+	}
+	.modal.group-modal li > div.active {
+		color:blue;
 	}
 </style>
 </head>
@@ -448,15 +459,13 @@
 			<div class="icon-bar">
 			
 				<!-- 사용자 목록 아이콘 -->
-				<div class="icon-wrapper">
-					<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-users" width="36" height="36" viewBox="0 0 24 24" stroke-width="1.5" stroke="#000000" fill="none" stroke-linecap="round" stroke-linejoin="round" @click="currentTab = 'user'" :class="{active : currentTab == 'user'}">
-						  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-						  <circle cx="9" cy="7" r="4" />
-						  <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
-						  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-						  <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
-					</svg>
-				</div>
+				<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-ghost" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round" @click="currentTab = 'user'" :class="{active : currentTab == 'user'}">
+				  	<path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+				  	<path d="M5 11a7 7 0 0 1 14 0v7a1.78 1.78 0 0 1 -3.1 1.4a1.65 1.65 0 0 0 -2.6 0a1.65 1.65 0 0 1 -2.6 0a1.65 1.65 0 0 0 -2.6 0a1.78 1.78 0 0 1 -3.1 -1.4v-7" />
+				  	<line x1="10" y1="10" x2="10.01" y2="10" />
+				  	<line x1="14" y1="10" x2="14.01" y2="10" />
+				  	<path d="M10 14a3.5 3.5 0 0 0 4 0" />
+				</svg>
 				
 				<!-- 채팅방 아이콘 -->
 				<div class="icon-wrapper">
@@ -482,6 +491,15 @@
 					</svg>
 				</div>
 				 -->
+				 
+				<!-- 그룹 채팅 -->
+				<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-users" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round" @click="openGroupTalkModal">
+				  	<path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+				  	<circle cx="9" cy="7" r="4" />
+				  	<path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+				  	<path d="M16 3.13a4 4 0 0 1 0 7.75" />
+				  	<path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+				</svg>
 				
 			</div>
 			<div class="user-list" v-show="isUserMode">
@@ -546,10 +564,10 @@
 			<div class="control-panel">
 				<div class="first-panel">
 					<div class="input-panel">
-						<textarea name="message" ref="messageInput" v-bind:placeholder="textareaPlaceholder" v-model="inputMessage" v-bind:disabled="!isUserSelected" v-on:keypress.enter.exact.prevent="sendMessage" v-on:keydown.shift.enter.prevent.exact="nextLine"></textarea>
+						<textarea name="message" ref="messageInput" v-bind:placeholder="textareaPlaceholder" v-model="inputMessage" v-bind:disabled="!isChatAvailable" v-on:keypress.enter.exact.prevent="sendMessage" v-on:keydown.shift.enter.prevent.exact="nextLine"></textarea>
 					</div>
 					<div class="button-panel">
-						<button v-on:click="sendMessage" v-bind:disabled="!isUserSelected">전송</button>
+						<button v-on:click="sendMessage" v-bind:disabled="!isChatAvailable">전송</button>
 					</div>
 				</div>
 				<div class="option-panel">
@@ -583,8 +601,8 @@
 		
 		<!-- 수정 관련 코드(예정) -->
 		<!-- 
-		<div class="profile-modal" :class="{show:modal}">
-			<div class="profile-header">Profile 수정</div>
+		<div class="modal profile-modal" :class="{show:profileModal}">
+			<div class="modal-header">Profile 수정</div>
 			<div class="row label">
 				닉네임
 			</div>
@@ -608,12 +626,32 @@
 				<input type="text" v-model="owner.status" placeholder="상태 메세지" autocomplete="off">
 			</div>
 			<div class="row-empty"></div>
-			<div class="profile-footer">
+			<div class="modal-footer">
 				<button @click="closeWithoutSave">취소</button>
 				<button @click="closeWithSave">저장 후 종료</button>
 			</div>
 		</div>
 		 -->
+		 
+		 <!-- 그룹 채팅 영역 -->
+		 <div class="modal group-modal" :class="{show:groupModal}">
+		 	<div class="header">그룹 채팅 생성</div>
+		 	<div class="row">
+		 		<ul>
+		 			<li v-for="(user, index) in users" :key="index">
+		 				<div @click="selectUserForGroupTalk(index);" :class="{active:user.group}">
+		 					{{user.id}}
+			 				<span v-if="user.id == owner.id">(자신)</span>
+		 				</div>
+		 			</li>
+		 		</ul>
+		 	</div>
+		 	<div class="row-empty"></div>
+		 	<div class="footer">
+		 		<button @click="closeGroupTalkModal">취소</button>
+		 		<button @click="generateGroupTalk" :disabled="!isGroupTalkUserSelected">생성</button>
+		 	</div>
+		 </div>
 	</div>
 	
 	<script src="https://unpkg.com/vue@next"></script>
@@ -646,7 +684,7 @@
 					inputMessage:"",
 					
 // 					수정 모달 관련 코드(예정)
-// 					modal:false,
+// 					profileModal:false,
 // 					profileList:[
 // 						{src:"https://picsum.photos/seed/1/200/200",selected:false},
 // 						{src:"https://picsum.photos/seed/2/200/200",selected:false},
@@ -659,6 +697,9 @@
 // 						{src:"https://picsum.photos/seed/9/200/200",selected:false},
 // 						{src:"https://picsum.photos/seed/10/200/200",selected:false}
 // 					],
+
+//					그룹 모달 관련 코드
+					groupModal:false,
 				};
 			},
 			computed:{
@@ -666,7 +707,7 @@
 					return this.inputMessage.trim().length > 0;
 				},
 				textareaPlaceholder(){
-					return this.currentUser ? "메세지 작성" : "사용자를 먼저 선택하세요";
+					return this.currentUser || this.currentRoom ? "메세지 작성" : "사용자 또는 채팅방을 선택하세요";
 				},
 				isUserMode(){
 					return this.currentTab == "user";
@@ -680,12 +721,18 @@
 				isRoomSelected(){
 					return this.currentRoom != null;
 				},
+				isChatAvailable(){
+					return this.isUserSelected || this.isRoomSelected;
+				},
 				remainCount(){
 					return this.rooms
 									.filter(room=>room.count)
 									.map(room=>room.count)
 									.reduce((prev, next) => prev+next , 0);
-				}
+				},
+				isGroupTalkUserSelected(){
+					return this.users.filter(user=>user.group).length > 0;
+				},
 			},
 			methods:{
 				connectOperation(){
@@ -848,12 +895,36 @@
 // 				closeWithoutSave(){
 // 					this.hideModal();
 // 				},
-// 				showModal(){
-// 					this.modal = true;
-// 				},
-// 				hideModal(){
-// 					this.modal = false;
-// 				},
+				selectUserForGroupTalk(index){
+					if(this.owner.id == this.users[index].id) return;
+					this.users[index].group = !this.users[index].group;
+				},
+				openGroupTalkModal(){
+					this.groupModal = true;
+				},
+				closeGroupTalkModal(){
+					this.groupModal = false;
+				},
+				generateGroupTalk(){
+					const userList = this.users.filter(user=>user.group);
+					if(userList.length == 0) return;
+					
+					this.currentRoom = {
+						no : undefined,
+						users : userList,
+						messages : [],
+						count : 0
+					};
+					
+					this.closeGroupTalkModal();
+					
+					//초기화
+					for(let i=0; i < this.users.length; i++){
+						if(this.users[i].group){
+							this.users[i].group = false;
+						}
+					}
+				},
 			},
 			watch:{
 				currentRoom : {
