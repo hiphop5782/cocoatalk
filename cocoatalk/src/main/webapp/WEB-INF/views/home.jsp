@@ -438,7 +438,7 @@
 			<div class="control-panel">
 				<div class="first-panel">
 					<div class="input-panel">
-						<textarea name="message" ref="messageInput" v-bind:placeholder="textareaPlaceholder" v-model="inputMessage" v-bind:disabled="!isUserSelected"></textarea>
+						<textarea name="message" ref="messageInput" v-bind:placeholder="textareaPlaceholder" v-model="inputMessage" v-bind:disabled="!isUserSelected" v-on:keypress.enter.exact.prevent="sendMessage" v-on:keydown.shift.enter.prevent.exact="nextLine"></textarea>
 					</div>
 					<div class="button-panel">
 						<button v-on:click="sendMessage" v-bind:disabled="!isUserSelected">전송</button>
@@ -622,7 +622,6 @@
 
 					//자기자신
 					if(user.id == this.owner){
-						console.log("자기자신 선택");
 						for(let i=0; i < this.rooms.length; i++){
 							if(this.rooms[i].users.length == 1) {
 								this.selectRoom(this.rooms[i]);
@@ -676,6 +675,9 @@
 					
 					const id = this.owner;
 					return array.filter(user=>user.id != id).map(user=> user.id).join(",");
+				},
+				nextLine(){
+					this.inputMessage += "\n";
 				},
 			},
 			watch:{
