@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class Message {
-	private String sender;
+	private User sender;
 	private String content;
 	private final String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("a h:mm"));
 }

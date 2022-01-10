@@ -94,6 +94,18 @@
 		width:100%;
 		height:100%;
 	}
+	.side-bar > .room-list > .room > .room-profile {
+		display: flex;
+		flex-wrap: wrap;
+	}
+	.side-bar > .room-list > .room > .room-profile > .image-wrapper {
+		width:50%;
+		flex-grow: 1;
+	}
+	.side-bar > .room-list > .room > .room-profile > .image-wrapper > img {
+		width:100%;
+		height:100%;
+	}
 	.side-bar > .user-list > .user > .user-detail,
 	.side-bar > .room-list > .room > .room-detail {
 		width:240px;
@@ -348,6 +360,85 @@
 		align-items: flex-end;
 	}
 	
+	.profile-modal {
+		position: fixed;
+		top:50%;
+		left:50%;
+		transform:translate(-50%, -50%);
+		width:350px;
+		height: 550px;
+		padding:15px;
+		
+		display:none;
+		flex-direction: column;
+		
+		border:1px solid black;		
+		background-color: white;
+	}
+	.profile-modal.show {
+		display: flex;
+	}
+	
+	.profile-modal > .profile-header {
+		text-align: center;
+		font-size:30px;
+		margin:0.5em 0;
+	}
+	
+	.profile-modal > .row {
+		margin-top:5px;
+		margin-bottom:5px;
+	}
+	.profile-modal > .row.label {
+		margin-top:15px;
+	}
+	.profile-modal > .row.profile-wrapper {
+		display:flex;
+		flex-wrap:wrap;
+	}
+	.profile-modal > .row.profile-wrapper > .profile-image {
+		width:20%;
+		overflow:hidden;
+		padding:5px;
+		cursor:pointer;
+	}
+	.profile-modal > .row.profile-wrapper > .profile-image > img {
+		width:100%;
+		border:2px solid transparent;
+	}
+	
+	.profile-modal > .row.profile-wrapper > .profile-image:hover > img,
+	.profile-modal > .row.profile-wrapper > .profile-image > img.selected {
+		border:2px solid #59473f;
+	}
+	.profile-modal > .row-empty {
+		flex-grow: 1
+	}
+	.profile-modal > .profile-footer {
+		text-align: right;
+	}
+	.profile-modal > .profile-footer > button {
+		margin-left: 5px;
+		outline: none;
+		border:1px solid #59473f;
+		background-color: white;
+		color:#59473f;
+		padding:0.5em;
+		cursor:pointer;
+	}
+	.profile-modal > .profile-footer > button:hover {
+		background-color: #59473f;
+		color: white;
+	}
+	
+	.profile-modal input {
+		border:none;
+		border-bottom:2px solid #59473f;
+		width:100%;
+		outline: none;
+		font-size: 15px;
+		padding: 0.5em;
+	}
 </style>
 </head>
 <body>
@@ -379,6 +470,18 @@
 					<div class="badge" v-show="remainCount > 0">{{remainCount}}</div>
 				</div>
 				
+				<!-- 수정 관련 코드(예정) -->
+				<!-- 
+				<div class="icon-wrapper">
+					<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user-search" width="36" height="36" viewBox="0 0 24 24" stroke-width="1.5" stroke="#000000" fill="none" stroke-linecap="round" stroke-linejoin="round" @click="showModal">
+						<path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+						<circle cx="12" cy="7" r="4" />
+						<path d="M6 21v-2a4 4 0 0 1 4 -4h1" />
+						<circle cx="16.5" cy="17.5" r="2.5" />
+						<path d="M18.5 19.5l2.5 2.5" />
+					</svg>
+				</div>
+				 -->
 				
 			</div>
 			<div class="user-list" v-show="isUserMode">
@@ -388,7 +491,10 @@
 					</div>
 					<div class="user-detail" v-on:click="selectUser(user);">
 						<div class="user-name">{{user.id}}</div>
-						<div class="user-status">{{user.status}}</div>
+						<div class="user-status">
+							{{user.status}}
+							<span v-if="!user.status">&nbsp;</span>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -396,7 +502,9 @@
 			<div class="room-list" v-show="isRoomMode">
 				<div class="room" v-for="(room, idx) in rooms" :key="idx">
 					<div class="room-profile">
-						<img src="https://via.placeholder.com/50x50?text=R">
+						<div class="image-wrapper" v-for="(user, index) in room.users">
+							<img :src="user.profile">
+						</div>
 					</div>
 					<div class="room-detail" v-on:click="selectRoom(room);">
 						<div class="room-name">
@@ -423,12 +531,12 @@
 			</div>
 			<div class="message-wrapper" ref="messageWrapper">
 				<div v-if="currentRoom" v-for="(msg, idx) in currentRoom.messages" >
-					<div  class="message-outer" v-bind:class="{my:msg.sender==owner}"> 
-						<div class="message-profile" v-if="msg.sender != owner" :class="{first : checkFirst(idx)}">
-							<img src="https://picsum.photos/50" v-if="checkFirst(idx)">
+					<div  class="message-outer" v-bind:class="{my:msg.sender.id==owner.id}"> 
+						<div class="message-profile" v-if="msg.sender.id != owner.id" :class="{first : checkFirst(idx)}">
+							<img :src="msg.sender.profile" v-if="checkFirst(idx)">
 						</div>
 						<div class="message-body" >
-							<div class="sender" v-if="msg.sender != owner && checkFirst(idx)">{{msg.sender}}</div>
+							<div class="sender" v-if="msg.sender.id != owner.id && checkFirst(idx)">{{msg.sender.id}}</div>
 							<div class="content">{{msg.content}}</div>
 							<div class="time" v-if="checkLast(idx)">{{msg.time}}</div>
 						</div>
@@ -472,20 +580,55 @@
 				</div>
 			</div>
 		</div>
+		
+		<!-- 수정 관련 코드(예정) -->
+		<!-- 
+		<div class="profile-modal" :class="{show:modal}">
+			<div class="profile-header">Profile 수정</div>
+			<div class="row label">
+				닉네임
+			</div>
+			<div class="row">
+				<input type="text" v-model="owner.id" placeholder="닉네임" autocomplete="off">
+			</div>
+			<div class="row label">
+				프로필 이미지
+			</div>
+			<div class="row profile-wrapper">
+				<div class="profile-image" v-for="(profile, index) in profileList">
+					<img :src="profile.src" :class="{selected : profile.selected}">
+				</div>
+			</div>
+			<div class="row label">
+				<label>
+					상태 메세지 설정
+				</label>
+			</div>
+			<div class="row">
+				<input type="text" v-model="owner.status" placeholder="상태 메세지" autocomplete="off">
+			</div>
+			<div class="row-empty"></div>
+			<div class="profile-footer">
+				<button @click="closeWithoutSave">취소</button>
+				<button @click="closeWithSave">저장 후 종료</button>
+			</div>
+		</div>
+		 -->
 	</div>
 	
 	<script src="https://unpkg.com/vue@next"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.24.0/axios.min.js"></script>
 	<script>
-		window.addEventListener("beforeunload", function(){
-			return false;
-		});
-	
 		var app = Vue.createApp({
 			data(){
 				return {
-					owner : "${id}",
+					owner : {
+						id:"${user.id}",
+						profile:"${user.profile}",
+						status:"${user.status}"
+					},
 					
 					currentTab : "user",//user 또는 room
 					
@@ -501,6 +644,21 @@
 					
 					//input
 					inputMessage:"",
+					
+// 					수정 모달 관련 코드(예정)
+// 					modal:false,
+// 					profileList:[
+// 						{src:"https://picsum.photos/seed/1/200/200",selected:false},
+// 						{src:"https://picsum.photos/seed/2/200/200",selected:false},
+// 						{src:"https://picsum.photos/seed/3/200/200",selected:false},
+// 						{src:"https://picsum.photos/seed/4/200/200",selected:false},
+// 						{src:"https://picsum.photos/seed/5/200/200",selected:false},
+// 						{src:"https://picsum.photos/seed/6/200/200",selected:false},
+// 						{src:"https://picsum.photos/seed/7/200/200",selected:false},
+// 						{src:"https://picsum.photos/seed/8/200/200",selected:false},
+// 						{src:"https://picsum.photos/seed/9/200/200",selected:false},
+// 						{src:"https://picsum.photos/seed/10/200/200",selected:false}
+// 					],
 				};
 			},
 			computed:{
@@ -532,7 +690,7 @@
 			methods:{
 				connectOperation(){
 					this.client.subscribe("/topic/all", this.publicReceiveOperation);
-					this.client.subscribe("/topic/${id}", this.privateReceiveOperation);
+					this.client.subscribe("/topic/${user.id}", this.privateReceiveOperation);
 				},
 				publicReceiveOperation(response){
 					this.users = JSON.parse(response.body);
@@ -554,13 +712,13 @@
 							no : roomData.roomNumber,
 							users : roomData.roomUsers,
 							messages : [roomData.message],
-							count : roomData.message.sender == this.owner ? 0 : 1,
+							count : roomData.message.sender.id == this.owner.id ? 0 : 1,
 						};
 						this.rooms.push(room);
 						this.client.subscribe("/topic/"+roomData.roomNumber, this.receiveOperation);
 						
 						//발신자와 소유자가 같으면 생성메세지로 보고 방을 변경
-						if(roomData.message.sender == this.owner){
+						if(roomData.message.sender.id == this.owner.id){
 							this.currentRoom = room;
 						}
 					}
@@ -614,14 +772,13 @@
 						this.inputMessage = "";
 						this.$refs.messageInput.focus();
 					}
-					
 				},
 				
 				selectUser(user){
 					this.currentUser = user;
 
 					//자기자신
-					if(user.id == this.owner){
+					if(user.id == this.owner.id){
 						for(let i=0; i < this.rooms.length; i++){
 							if(this.rooms[i].users.length == 1) {
 								this.selectRoom(this.rooms[i]);
@@ -634,10 +791,11 @@
 					//다른사람
 					let index = -1;
 					for(let i=0; i < this.rooms.length; i++){
+						//사람을 선택했으므로 1:1 채팅방만 탐색하도록 나머지는 pass
 						if(this.rooms[i].users.length != 2) continue;
 						
 						const a = this.rooms[i].users[0], b = this.rooms[i].users[1];
-						if((this.owner == a.id && user.id == b.id) || (this.owner == b.id && user.id == a.id)){
+						if((this.owner.id == a.id && user.id == b.id) || (this.owner.id == b.id && user.id == a.id)){
 							index = i;
 							break;
 						}
@@ -656,7 +814,7 @@
 					const messageList = this.currentRoom.messages;
 					
 					if(messageList[idx-1].time != messageList[idx].time) return true;
-					if(messageList[idx-1].sender != messageList[idx].sender) return true;
+					if(messageList[idx-1].sender.id != messageList[idx].sender.id) return true;
 					
 					return false;
 				},
@@ -666,19 +824,36 @@
 					
 					if(idx == messageList.length-1) return true;
 					if(messageList[idx+1].time != messageList[idx].time) return true;
-					if(messageList[idx+1].sender != messageList[idx].sender) return true;
+					if(messageList[idx+1].sender.id != messageList[idx].sender.id) return true;
 					
 					return false;
 				},
 				convertToUserString(array){
 					if(array.length == 1) return array[0].id;
 					
-					const id = this.owner;
+					const id = this.owner.id;
 					return array.filter(user=>user.id != id).map(user=> user.id).join(",");
 				},
 				nextLine(){
 					this.inputMessage += "\n";
 				},
+				
+// 				수정 관련 코드(예정)
+// 				closeWithSave(){
+// 					axios.put("./", JSON.stringify(this.owner), {headers:{"Content-Type":"application/json"}})
+// 							.then((resp)=>{
+// 								this.hideModal();								
+// 							});
+// 				},
+// 				closeWithoutSave(){
+// 					this.hideModal();
+// 				},
+// 				showModal(){
+// 					this.modal = true;
+// 				},
+// 				hideModal(){
+// 					this.modal = false;
+// 				},
 			},
 			watch:{
 				currentRoom : {
@@ -695,9 +870,15 @@
 				this.client = Stomp.over(this.socket);
 				
 				this.client.connect({}, this.connectOperation);
-			},
-			mounted(){
 				
+// 				수정 모달 관련 코드(예정)
+// 				for(let i=0; i < this.profileList.length; i++){
+// 					console.log("profile", this.owner.profile, "src", this.profileList[i].src); 
+// 					if(this.owner.profile == this.profileList[i].src) {
+// 						this.profileList[i].selected = true;
+// 						break;
+// 					}
+// 				}
 			},
 		});
 		app.mount("#app");
