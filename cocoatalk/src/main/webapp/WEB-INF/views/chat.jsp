@@ -501,7 +501,10 @@
 						<img v-bind:src="user.profile">
 					</div>
 					<div class="user-detail" v-on:click="selectUser(user);">
-						<div class="user-name">{{user.nickname}}</div>
+						<div class="user-name">
+							{{user.nickname}}
+							<span v-if="user.seq == parseInt(owner.seq)">(자신)</span> 
+						</div>
 						<div class="user-status">
 							{{user.status}}
 							<span v-if="!user.status">&nbsp;</span>
@@ -510,42 +513,42 @@
 				</div>
 			</div>
 			
-			<!-- 
 			<div class="room-list" v-show="mode == 'room'">
-				<div class="room" v-for="(room, idx) in roomList" :key="idx">
+				<div class="room" v-for="(data, idx) in roomList" :key="idx">
 					<div class="room-profile">
-						<div class="image-wrapper" v-for="(user, index) in room.users">
+						<div class="image-wrapper" v-for="(user, index) in data.users">
 							<img :src="user.profile">
 						</div>
 					</div>
 					<div class="room-detail" v-on:click="selectRoom(room);">
 						<div class="room-name">
-							<span v-show="false">{{room.no}}번 방</span>
-							{{convertToUserString(room.users)}}
+							<span v-show="true">{{data.room.no}}번 방</span>
+<!-- 							{{convertToUserString(room.users)}} -->
 						</div>
 						<div class="room-preview">
-							{{room.messages[room.messages.length-1].content}}
+							preview
 						</div>
-						<div class="badge" v-show="room.count > 0">{{room.count}}</div>
+						<div class="badge" v-show="true">1</div>
 					</div>
 				</div>
 			</div>
-			 -->
+			
 		</div>
 		
 		<!-- chat-wrapper -->
 		<div class="chat-wrapper">
 			<div class="room-information">
 				<div class="title" v-if="isTempRoom">
-					{{currentRoom.users[0].nickname}} 님과의 대화
+					<span v-if="currentRoom.users[0].seq == parseInt(owner.seq)">내 대화방</span>
+					<span v-else>{{currentRoom.users[0].nickname}} 님과의 대화</span>
 				</div>
 				<div class="title" v-else-if="isExistRoom">
 					<span v-show="false">{{currentRoom.no}}번 방</span>
-<!-- 					{{convertToUserString(currentRoom.users)}} -->
+					{{calculateRoomTitle(currentRoom.users)}}
 				</div>
 			</div>
 			<div class="message-wrapper" ref="messageWrapper">
-				<div v-if="isExistRoom" v-for="(msg, idx) in currentRoom.messages" >
+				<div v-if="isExistRoom" v-for="(msg, idx) in currentRoom.history" >
 					<div  class="message-outer" v-bind:class="{my:msg.sender.seq==owner.seq}"> 
 						<div class="message-profile" v-if="msg.sender.seq != owner.seq" :class="{first : checkFirst(idx)}">
 							<img :src="msg.sender.profile" v-if="checkFirst(idx)">
@@ -628,7 +631,9 @@
 					
 					mode:"user",
 					
+					//room
 					currentRoom:null,
+					roomList:[],
 					
 					//room message list
 					roomMessageList:[],
@@ -636,10 +641,10 @@
 			},
 			computed:{
 				isTempRoom(){
-					return this.currentRoom != null && this.currentRoom.no == 0;
+					return this.currentRoom != null && this.currentRoom.roomNo == 0;
 				},
 				isExistRoom() {
-					return this.currentRoom != null && this.currentRoom.no > 0;
+					return this.currentRoom != null && this.currentRoom.roomNo > 0;
 				},
 				isEditorValid() {
 					return this.currentRoom != null;
@@ -658,19 +663,24 @@
 					switch(obj.type) {
 					case "userList":
 						this.userList.splice(0);
-						this.userList.push(...obj.data);
+						this.userList.push(this.owner);
+						this.userList.push(...obj.data.filter(u=>u.seq !== parseInt(this.owner.seq)));
+						break;
+					case "roomList":
+						this.roomList.splice(0);
+						this.roomList.push(...obj.data);
 						break;
 					case "message":
 						this.addMessageStack(obj);
 						break;
 					}
 				},
-				sendEditorMessage(e) {
+				sendEditorMessage(e) {  
 					if(!(this.isExistRoom || this.isTempRoom)) return;
 					if(!this.editorMessage) return;
 					
 					const data = {
-						room : this.currentRoom.no,
+						roomNo : this.currentRoom.roomNo,
 						content : this.editorMessage
 					};
 					
@@ -681,12 +691,27 @@
 					this.socket.send(JSON.stringify(data));
 					this.editorMessage = "";
 				},
+				arrayEquals(a, b){
+					return a.length === b.length && a.every((v,i)=> parseInt(v) === parseInt(b[i]));
+				},
 				selectUser(user) {
-					this.currentRoom = {
-						no:0,
-						users:[user],
-						messages:[],
-					};
+					//선택한 유저와 둘만의 메세지룸 찾기
+					const dummy = [this.owner.seq, user.seq].sort();
+					const target = this.roomMessageList.filter((obj, idx)=>{
+						const array = obj.users.map(d=>d.seq).sort();
+						return this.arrayEquals(dummy, array);
+					});
+					
+					if(target.length == 0) {
+						this.currentRoom = {
+							roomNo:0,
+							users:[user],               
+							history:[],
+						};
+					}
+					else {
+						this.currentRoom = target[0];
+					}
 				},
 				
 				textareaNextline() {
@@ -696,6 +721,7 @@
 				addMessageStack(obj) {
 					const data = obj.data;
 					const isNew = obj.isNew;
+					const userList = obj.userList;
 					
 					let index = -1;
 					const target = this.roomMessageList.filter((obj, idx)=>{
@@ -709,17 +735,18 @@
 					if(index == -1) {//신규
 						const obj = {
 							roomNo : data.room.no,
+							users : userList,
 							history : [data] 
 						};
 						this.roomMessageList.unshift(obj);
 						
 						if(isNew) {
-							this.currentRoom.no = data.room.no;
-							this.currentRoom.messages = obj.history;
+							this.currentRoom = obj;
 						}
 					}
 					else {//기존
 						const obj = target[0];
+						obj.users = userList;
 						obj.history.push(data);
 						this.roomMessageList.splice(index, 1);
 						this.roomMessageList.unshift(obj);
@@ -729,7 +756,7 @@
 				checkFirst(idx){
 					if(idx == 0) return true;
 					
-					const messageList = this.currentRoom.messages;
+					const messageList = this.currentRoom.history;
 					
 					if(messageList[idx-1].time != messageList[idx].time) return true;
 					if(messageList[idx-1].sender.seq != messageList[idx].sender.seq) return true;
@@ -738,7 +765,7 @@
 				},
 				//마지막 메세지 확인(동일시간)
 				checkLast(idx){
-					const messageList = this.currentRoom.messages;
+					const messageList = this.currentRoom.history;
 					
 					if(idx == messageList.length-1) return true;
 					if(messageList[idx+1].time != messageList[idx].time) return true;
@@ -749,6 +776,17 @@
 				
 				timeFormat(time) {
 					return moment.utc(time).format("LT");
+				},
+				
+				calculateRoomTitle(users) {
+					const withoutOwner = users.filter(user=>user.seq !== parseInt(this.owner.seq));
+					
+					//한명도 안남았으면 자신과의 대화
+					switch(withoutOwner.length) {
+					case 0: return "내 대화방";
+					case 1: return withoutOwner[0].nickname + " 님과의 대화";
+					default: return withoutOwner.join(',') + " 님과의 그룹 대화";
+					}
 				}
 			},
 			watch:{

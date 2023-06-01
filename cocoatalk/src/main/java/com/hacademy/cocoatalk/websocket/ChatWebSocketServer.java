@@ -1,6 +1,7 @@
 package com.hacademy.cocoatalk.websocket;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,7 @@ import com.hacademy.cocoatalk.repo.RoomMessageRepository;
 import com.hacademy.cocoatalk.repo.RoomRepository;
 import com.hacademy.cocoatalk.repo.RoomUserRepository;
 import com.hacademy.cocoatalk.repo.UserRepository;
+import com.hacademy.cocoatalk.vo.RoomAndUserVO;
 import com.hacademy.cocoatalk.vo.RoomUserMessageVO;
 
 import lombok.extern.slf4j.Slf4j;
@@ -150,7 +152,7 @@ public class ChatWebSocketServer extends TextWebSocketHandler{
 		}
 		else {
 			//방 찾기
-			Room room = roomRepository.findById(receiveData.getRoom()).orElse(null);
+			Room room = roomRepository.findById(receiveData.getRoomNo()).orElse(null);
 			if(room == null) return;
 			
 			//메세지 등록
@@ -167,7 +169,19 @@ public class ChatWebSocketServer extends TextWebSocketHandler{
 	}
 
 	private void broadcastRoomList(User user) throws IOException {
-		
+		Set<Room> roomList = users.get(user);
+		List<RoomAndUserVO> roomAndUserList = new ArrayList<>(); 
+		for(Room room : roomList) {
+			roomAndUserList.add(RoomAndUserVO.builder()
+						.room(room)
+						.users(rooms.get(room))
+					.build());
+		}
+		Map<String, Object> map = new HashMap<>();
+		map.put("type", "roomList");
+		map.put("data", roomAndUserList);
+		TextMessage message = new TextMessage(mapper.writeValueAsString(map));
+		user.getSession().sendMessage(message);
 	}
 	
 	private void broadcastUserList() throws IOException {
@@ -190,6 +204,7 @@ public class ChatWebSocketServer extends TextWebSocketHandler{
 		Map<String, Object> map = new HashMap<>();
 		map.put("type", "message");
 		map.put("data", roomMessage);
+		map.put("userList", userList);
 		map.put("isNew", isNew);
 		
 		TextMessage message = new TextMessage(mapper.writeValueAsString(map));

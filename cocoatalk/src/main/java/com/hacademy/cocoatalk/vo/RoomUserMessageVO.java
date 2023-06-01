@@ -12,11 +12,11 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class RoomUserMessageVO {
-	private long room;
+	private long roomNo;
 	private List<Long> target;
 	private String content;
 	
 	public boolean isFirstTimeMessage() {
-		return room == 0;
+		return roomNo == 0;
 	}
 }
