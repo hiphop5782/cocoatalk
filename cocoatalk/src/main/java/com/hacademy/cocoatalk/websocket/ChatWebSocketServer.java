@@ -208,6 +208,8 @@ public class ChatWebSocketServer extends TextWebSocketHandler{
 		map.put("isNew", isNew);
 		
 		TextMessage message = new TextMessage(mapper.writeValueAsString(map));
-		broadcastMessage(message);
+		for(User user : userList) {
+			user.getSession().sendMessage(message);
+		}
 	}
 }

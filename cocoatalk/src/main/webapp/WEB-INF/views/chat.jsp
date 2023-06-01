@@ -740,7 +740,7 @@
 						};
 						this.roomMessageList.unshift(obj);
 						
-						if(isNew) {
+						if(isNew && obj.history[0].sender.seq === parseInt(this.owner.seq)) {
 							this.currentRoom = obj;
 						}
 					}
