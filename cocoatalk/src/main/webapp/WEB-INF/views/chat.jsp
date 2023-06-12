@@ -604,7 +604,7 @@
 		
 	</div>
 	
-	<script src="https://unpkg.com/vue@next"></script>
+	<script src="https://unpkg.com/vue@3.2.26"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.24.0/axios.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
@@ -667,8 +667,7 @@
 						this.userList.push(...obj.data.filter(u=>u.seq !== parseInt(this.owner.seq)));
 						break;
 					case "roomList":
-						this.roomList.splice(0);
-						this.roomList.push(...obj.data);
+						this.initMessageStack(obj);
 						break;
 					case "message":
 						this.addMessageStack(obj);
@@ -787,6 +786,10 @@
 					case 1: return withoutOwner[0].nickname + " 님과의 대화";
 					default: return withoutOwner.join(',') + " 님과의 그룹 대화";
 					}
+				},
+				
+				initMessageStack(obj) {
+					console.log(obj);
 				}
 			},
 			watch:{

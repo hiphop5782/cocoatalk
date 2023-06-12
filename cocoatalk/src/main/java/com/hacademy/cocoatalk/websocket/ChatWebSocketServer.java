@@ -175,6 +175,7 @@ public class ChatWebSocketServer extends TextWebSocketHandler{
 			roomAndUserList.add(RoomAndUserVO.builder()
 						.room(room)
 						.users(rooms.get(room))
+						.messages(roomMessageRepository.findByRoom(room))
 					.build());
 		}
 		Map<String, Object> map = new HashMap<>();
